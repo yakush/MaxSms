@@ -1,0 +1,22 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:longClickable="true"
+    android:orientation="vertical" 
+    android:padding="5dip">
+
+    <TextView
+        android:id="@+id/listitem_listitems_txt_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="name"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <TextView
+        android:id="@+id/listitem_listitems_txt_number"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="number"
+        android:textAppearance="?android:attr/textAppearanceSmall" />
+
+</LinearLayout>
