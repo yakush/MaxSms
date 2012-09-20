@@ -1,5 +1,6 @@
 package com.yakstudio.android.maxSms.activities;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -22,11 +23,14 @@ import com.yakstudio.android.maxSms.Constants;
 import com.yakstudio.android.maxSms.R;
 import com.yakstudio.android.maxSms.db.Contact;
 import com.yakstudio.android.maxSms.db.DbHelper;
+import com.yakstudio.android.maxSms.db.List;
 
 public class ListItemsActivity extends Activity{
 	static final String TAG="ListItemsActivity";
 	
 	private ListView list_items;
+	private TextView text_listName;
+	private TextView text_listCount;
 	//private Button btn_add;
 	
 	private Cursor cursor;
@@ -47,6 +51,8 @@ public class ListItemsActivity extends Activity{
         db=new DbHelper(this);
         
         list_items=(ListView)findViewById(R.id.activity_listitems_list_items);
+        text_listName=(TextView)findViewById(R.id.activity_listitems_text_listName);
+        text_listCount=(TextView)findViewById(R.id.activity_listitems_text_listCount);
         //btn_add=(Button)findViewById(R.id.activity_lists_btn_add);
         
         //
@@ -98,7 +104,7 @@ public class ListItemsActivity extends Activity{
 		Log.d(TAG, "Loading lists");
 
 		class Task extends AsyncTask<Void, Void, Cursor> {
-
+			List list;
 			@Override
 			protected void onPreExecute() {
 				super.onPreExecute();
@@ -108,10 +114,14 @@ public class ListItemsActivity extends Activity{
 			@Override
 			protected Cursor doInBackground(Void... params) {
 				Log.d(TAG, "loading - do in bkg...");
-				// DbHelper db=new DbHelper(ListsActivity.this);
-
+				
+				//get list:
+				Cursor listInfoCursor= db.lists.query(list_id);
+				listInfoCursor.moveToFirst();
+				list=new List(listInfoCursor);
+				listInfoCursor.close();
+				
 				return db.contacts.queryByListId(list_id);
-
 			}
 
 			@Override
@@ -123,10 +133,17 @@ public class ListItemsActivity extends Activity{
 			protected void onPostExecute(Cursor result) {
 				super.onPostExecute(result);
 				Log.d(TAG, "loading - post...");
-
+				
+				//set list info:
+				text_listName.setText(String.format("%s",list.name));
+				text_listCount.setText(String.format("%d contacts",list.contacts_count ));
+				
+				//populate list:
 				adapter.changeCursor(result);
 				closeCursor();
 				ListItemsActivity.this.cursor = result;
+				
+				Log.d(TAG,String.format("%d items", ListItemsActivity.this.cursor.getCount()));
 			}
 		}
 		;
@@ -136,6 +153,49 @@ public class ListItemsActivity extends Activity{
 
 	}
 	
+	private void deleteContact(Contact contact) {
+		final ProgressDialog dialog = new ProgressDialog(this);
+		dialog.setTitle("Deleting");
+		dialog.setCancelable(false);
+		dialog.setCanceledOnTouchOutside(false);
+		
+		class Task extends AsyncTask<Long, Void, Void>{
+
+			@Override
+			protected void onPreExecute() {
+				super.onPreExecute();
+				Log.d(TAG,"delete - pre...");
+				dialog.show();
+			}
+			
+			@Override
+			protected Void doInBackground(Long... params) {
+				Log.d(TAG,"delete - do in bkg...");
+				//DbHelper db=new DbHelper(ListsActivity.this);
+				
+				db.contacts.delete(params[0]);
+				
+				return null;
+			}
+			
+			@Override
+			protected void onProgressUpdate(Void... values) {
+				super.onProgressUpdate(values);
+			}
+			
+			@Override
+			protected void onPostExecute(Void result) {
+				super.onPostExecute(result);
+				Log.d(TAG,"delete - post...");
+				dialog.dismiss();
+				populateList();
+			}		
+		};
+		
+		Task task= new Task();
+		task.execute(contact.id);
+
+	}
 	private class Adapter extends ResourceCursorAdapter {
 
 		public Adapter(Context context, int layout, Cursor c) {
@@ -144,6 +204,7 @@ public class ListItemsActivity extends Activity{
 
 		@Override
 		public void bindView(View view, Context context, Cursor cursor) {
+			//Log.d("TAG",".");
 			TextView name = (TextView) view
 					.findViewById(R.id.listitem_listitems_txt_name);
 			TextView number = (TextView) view
@@ -191,8 +252,7 @@ public class ListItemsActivity extends Activity{
 			try {
 				AdapterView.AdapterContextMenuInfo info;
 				info = (AdapterView.AdapterContextMenuInfo) menuInfo;
-				Log.d(TAG, String.format("item id %d: position: %d", info.id,
-						info.position));
+				Log.d(TAG, String.format("item id %d: position: %d", info.id,info.position));
 
 				if (cursor != null) {
 					cursor.moveToPosition(info.position);
@@ -200,7 +260,7 @@ public class ListItemsActivity extends Activity{
 						// Contact contact = new Contact(cursor);
 
 						MenuInflater inflater = getMenuInflater();
-						inflater.inflate(R.menu.menu_listitem_lists, menu);
+						inflater.inflate(R.menu.menu_listitem_listitems, menu);
 
 					}
 				}
@@ -219,22 +279,22 @@ public class ListItemsActivity extends Activity{
 		} catch (ClassCastException e) {
 			Log.d(TAG, "bad menuInfo", e);
 		}
-		/*
+		
 		switch (item.getItemId()) {
 		
-		case R.id.menuitem_listitem_lists_delete:
+		case R.id.menuitem_listitem_listitems_delete:
 			if (info != null && cursor != null) {
 				cursor.moveToPosition(info.position);
 				if (!cursor.isAfterLast() && !cursor.isBeforeFirst()) {
-					List list = new List(cursor);
-					Log.d(TAG, String.format("delete : id - %d", list.id));
-					deleteList(list);
+					Contact contact= new Contact(cursor);
+					Log.d(TAG, String.format("delete : id - %d", contact.id));
+					deleteContact(contact);
 					return true;
 
 				}
 			}
-
-		case R.id.menuitem_listitem_lists_import:
+		/*
+		case R.id.menuitem_listitem_listitems_edit:
 			if (info != null && cursor != null) {
 				cursor.moveToPosition(info.position);
 				if (!cursor.isAfterLast() && !cursor.isBeforeFirst()) {
@@ -246,9 +306,11 @@ public class ListItemsActivity extends Activity{
 
 				}
 			}
-
-		}
+		
 		*/
+			
+		}
+		
 		return super.onContextItemSelected(item);
 	}
 }

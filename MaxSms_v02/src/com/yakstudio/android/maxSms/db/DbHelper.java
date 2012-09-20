@@ -117,10 +117,18 @@ public class DbHelper {
 		}
 		
 		public long delete(long id){
-			//SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
-			
+			//remove contacts:
+			db.delete(Contacts.TABLE_NAME, String.format("%s=%d",Contacts.C_LIST_ID, id),null);
+
+			//remove list:
 			long res=db.delete(TABLE_NAME, String.format("%s=%d",C_ID, id),null);
-			//db.close();
+			
+			return res;
+		}
+		
+		public long empty(long id){
+			long res=db.delete(Contacts.TABLE_NAME, String.format("%s=%d",Contacts.C_LIST_ID, id),null);
+			updateCount(id);
 			return res;
 		}
 		

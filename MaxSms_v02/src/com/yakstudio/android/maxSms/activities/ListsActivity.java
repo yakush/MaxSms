@@ -223,6 +223,18 @@ public class ListsActivity extends Activity implements OnClickListener{
 				}
 			}
 			
+		case R.id.menuitem_listitem_lists_empty:
+			if(info !=null && cursor!=null){
+				cursor.moveToPosition(info.position);
+				if(!cursor.isAfterLast() && !cursor.isBeforeFirst()){
+					List list= new List(cursor);
+					Log.d(TAG,String.format("empty : id - %d",list.id));
+					
+					emptyList(list);
+					return true;
+				
+				}
+			}
 		case R.id.menuitem_listitem_lists_import:
 			if(info !=null && cursor!=null){
 				cursor.moveToPosition(info.position);
@@ -238,8 +250,6 @@ public class ListsActivity extends Activity implements OnClickListener{
 			
 			
 		}
-		
-		
 		
 		
 		return super.onContextItemSelected(item);
@@ -371,6 +381,50 @@ public class ListsActivity extends Activity implements OnClickListener{
 			protected void onPostExecute(Void result) {
 				super.onPostExecute(result);
 				Log.d(TAG,"delete - post...");
+				dialog.dismiss();
+				populateList();
+			}		
+		};
+		
+		Task task= new Task();
+		task.execute(list.id);
+		
+	}
+	
+	private void emptyList(List list) {
+		final ProgressDialog dialog = new ProgressDialog(this);
+		dialog.setTitle("Emptying list");
+		dialog.setCancelable(false);
+		dialog.setCanceledOnTouchOutside(false);
+		
+		class Task extends AsyncTask<Long, Void, Void>{
+
+			@Override
+			protected void onPreExecute() {
+				super.onPreExecute();
+				Log.d(TAG,"emptyList - pre...");
+				dialog.show();
+			}
+			
+			@Override
+			protected Void doInBackground(Long... params) {
+				Log.d(TAG,"emptyList - do in bkg...");
+				//DbHelper db=new DbHelper(ListsActivity.this);
+				
+				db.lists.empty(params[0]);
+				
+				return null;
+			}
+			
+			@Override
+			protected void onProgressUpdate(Void... values) {
+				super.onProgressUpdate(values);
+			}
+			
+			@Override
+			protected void onPostExecute(Void result) {
+				super.onPostExecute(result);
+				Log.d(TAG,"emptyList - post...");
 				dialog.dismiss();
 				populateList();
 			}		
