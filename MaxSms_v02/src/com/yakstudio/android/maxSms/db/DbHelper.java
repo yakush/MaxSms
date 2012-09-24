@@ -11,7 +11,7 @@ public class DbHelper {
 	static final String TAG = "DbHelper";
 	
 	public static final String DB_NAME = "maxSms.db";
-	public static final int DB_VERSION = 1005;
+	public static final int DB_VERSION = 1006;
 	
 	private DbOpenHelper dbOpenHelper;
 	private SQLiteDatabase db; 
@@ -143,7 +143,7 @@ public class DbHelper {
 			return count;
 		}
 		
-		public void updateCount(long id){
+		public long updateCount(long id){
 			//SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
 			
 			
@@ -173,8 +173,8 @@ public class DbHelper {
 			cv.put(C_CONTACTS_COUNT, countItems(id));
 			
 			long res= db.update(TABLE_NAME, cv ,String.format("%s=%d", C_ID,id),null);
-			//db.close();
-			//return res;
+			
+			return res;
 		}
 	}
 	
@@ -287,7 +287,217 @@ public class DbHelper {
 		}
 		
 	}
+	
+	// Jobs:
+	public Jobs jobs = new Jobs();
+	public class Jobs{
+		//contacts table:
+		public static final String TABLE_NAME = "jobs";
+		public static final String C_ID = "_id"; //INT
+		public static final String C_MESSAGE = "message"; //TEXT
+		public static final String C_STATUS = "status"; //INT
+		public static final String C_CREATED = "created"; //INT
 		
+		public static final int STATUS_PENDING = 	0;
+		public static final int STATUS_RUNNIG = 	1;
+		public static final int STATUS_CANCELED = 	2;
+		public static final int STATUS_ERROR = 		3;
+		
+		public void createTable(SQLiteDatabase db){
+			Log.d(TAG,"creating " + TABLE_NAME + " table");
+			
+			String sql = "" +
+					"CREATE TABLE " + TABLE_NAME 
+					+ "(" + C_ID + " INTEGER PRIMARY KEY AUTOINCREMENT"
+					+ "," + C_MESSAGE+ " TEXT"
+					+ "," + C_STATUS + " INTEGER"
+					+ "," + C_CREATED + " INTEGER"
+					+ ")";
+			
+			Log.d(TAG,sql);
+			db.execSQL(sql);
+		}
+		
+		public void dropTable(SQLiteDatabase db){
+			Log.d(TAG,"dropping " + TABLE_NAME + " table");
+			
+			String sql = "DROP TABLE IF EXISTS " + TABLE_NAME;
+			Log.d(TAG,sql);
+			db.execSQL(sql);
+		}
+		
+		public long insert(Job job){
+			long res = db.insert(TABLE_NAME, null, job.toContentValues());
+			return res;
+		}
+		
+		public long update(Job job){
+			ContentValues cv=job.toContentValues();
+			cv.remove(C_ID);
+			
+			//SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+			long res=db.update(TABLE_NAME, job.toContentValues(),String.format("%s=%d", C_ID,job.id),null);
+
+			return res;
+		}
+		
+		public Cursor query(){
+			Cursor result=db.query(TABLE_NAME, null, null, null, null, null, String.format("%s DESC", C_CREATED));
+			return result;
+		}
+		
+		public Cursor query(long id){
+			//SQLiteDatabase db = dbOpenHelper.getReadableDatabase();
+			Cursor result=db.query(TABLE_NAME, null, String.format("%s=%d", C_ID,id), null, null, null, String.format("%s DESC", C_CREATED));
+			return result;
+		}
+		
+		public long delete(long id){
+			long res=db.delete(TABLE_NAME, String.format("%s=%d",C_ID, id),null);
+			return res;
+		}
+		
+	}
+	
+	// JobLists
+	public JobLists jobLists= new JobLists();
+	public class JobLists{
+		//cols
+		public static final String TABLE_NAME = "jobLists";
+		public static final String C_ID = "_id"; //INT
+		public static final String C_JOB_ID = "job_id"; //long
+		public static final String C_LIST_ID = "list_id"; //long
+		public static final String C_CREATED = "created"; //INT
+		
+		public void createTable(SQLiteDatabase db){
+			Log.d(TAG,"creating " + TABLE_NAME + " table");
+			
+			String sql = "" +
+					"CREATE TABLE " + TABLE_NAME 
+					+ "(" + C_ID + " INTEGER PRIMARY KEY AUTOINCREMENT"
+					+ "," + C_JOB_ID+ " INTEGER"
+					+ "," + C_LIST_ID + " INTEGER"
+					+ "," + C_CREATED + " INTEGER"
+					+ ")";
+			
+			Log.d(TAG,sql);
+			db.execSQL(sql);
+		}
+		
+		public void dropTable(SQLiteDatabase db){
+			Log.d(TAG,"dropping " + TABLE_NAME + " table");
+			
+			String sql = "DROP TABLE IF EXISTS " + TABLE_NAME;
+			Log.d(TAG,sql);
+			db.execSQL(sql);
+		}
+		
+		public long insert(JobList jobList){
+			long res = db.insert(TABLE_NAME, null, jobList.toContentValues());
+			return res;
+		}
+		
+		public long update(JobList jobList){
+			ContentValues cv=jobList.toContentValues();
+			cv.remove(C_ID);
+			
+			//SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+			long res=db.update(TABLE_NAME, jobList.toContentValues(),String.format("%s=%d", C_ID,jobList.id),null);
+
+			return res;
+		}
+		
+		public Cursor query(){
+			Cursor result=db.query(TABLE_NAME, null, null, null, null, null, String.format("%s DESC", C_CREATED));
+			return result;
+		}
+		
+		public Cursor query(long id){
+			//SQLiteDatabase db = dbOpenHelper.getReadableDatabase();
+			Cursor result=db.query(TABLE_NAME, null, String.format("%s=%d", C_ID,id), null, null, null, String.format("%s DESC", C_CREATED));
+			return result;
+		}
+		
+		public long delete(long id){
+			long res=db.delete(TABLE_NAME, String.format("%s=%d",C_ID, id),null);
+			return res;
+		}
+		
+	}
+	
+	// JobLists
+	public JobContacts jobContacts= new JobContacts();
+	public class JobContacts{
+		//cols
+		public static final String TABLE_NAME = "jobContacts";
+		public static final String C_ID = "_id"; //INT
+		public static final String C_JOB_ID = "job_id"; //long
+		public static final String C_CONTACT_ID = "contact_id"; //long
+		public static final String C_STATUS = "status"; //int
+		public static final String C_RETRIES = "retries"; //int
+		public static final String C_CREATED = "created"; //INT
+		
+		public static final int STATUS_PENDING = 	0;
+		public static final int STATUS_SENDING = 	1;
+		public static final int STATUS_SENT = 		2;
+		public static final int STATUS_RECIEVED = 	3;
+		public static final int STATUS_ERROR = 		4;
+		
+		public void createTable(SQLiteDatabase db){
+			Log.d(TAG,"creating " + TABLE_NAME + " table");
+			
+			String sql = "" +
+					"CREATE TABLE " + TABLE_NAME 
+					+ "(" + C_ID + " INTEGER PRIMARY KEY AUTOINCREMENT"
+					+ "," + C_JOB_ID+ " INTEGER"
+					+ "," + C_CONTACT_ID + " INTEGER"
+					+ "," + C_STATUS + " INTEGER"
+					+ "," + C_RETRIES + " INTEGER"
+					+ "," + C_CREATED + " INTEGER"
+					+ ")";
+			
+			Log.d(TAG,sql);
+			db.execSQL(sql);
+		}
+		
+		public void dropTable(SQLiteDatabase db){
+			Log.d(TAG,"dropping " + TABLE_NAME + " table");
+			
+			String sql = "DROP TABLE IF EXISTS " + TABLE_NAME;
+			Log.d(TAG,sql);
+			db.execSQL(sql);
+		}
+		
+		public long insert(JobContact jobContact){
+			long res = db.insert(TABLE_NAME, null, jobContact.toContentValues());
+			return res;
+		}
+		
+		public long update(JobContact jobContact){
+			ContentValues cv=jobContact.toContentValues();
+			cv.remove(C_ID);
+			
+			long res=db.update(TABLE_NAME, jobContact.toContentValues(),String.format("%s=%d", C_ID,jobContact.id),null);
+
+			return res;
+		}
+		
+		public Cursor query(){
+			Cursor result=db.query(TABLE_NAME, null, null, null, null, null, String.format("%s DESC", C_CREATED));
+			return result;
+		}
+		
+		public Cursor query(long id){
+			Cursor result=db.query(TABLE_NAME, null, String.format("%s=%d", C_ID,id), null, null, null, String.format("%s DESC", C_CREATED));
+			return result;
+		}
+		
+		public long delete(long id){
+			long res=db.delete(TABLE_NAME, String.format("%s=%d",C_ID, id),null);
+			return res;
+		}
+		
+	}
 	//////////////////////////////////////////
 	//OPEN HELPER:
 	private class DbOpenHelper extends SQLiteOpenHelper{
@@ -305,6 +515,8 @@ public class DbHelper {
 			//created tables:
 			lists.createTable(db);
 			contacts.createTable(db);
+			jobs.createTable(db);
+			jobLists.createTable(db);
 		}
 
 		@Override
@@ -314,6 +526,8 @@ public class DbHelper {
 			//drop all tables for now (LOSE ALL DATA!):
 			lists.dropTable(db);
 			contacts.dropTable(db);
+			jobs.dropTable(db);
+			jobLists.dropTable(db);
 			
 			//recreate tables:
 			onCreate(db);			
