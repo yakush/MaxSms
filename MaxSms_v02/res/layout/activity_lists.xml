@@ -12,7 +12,7 @@
     <ListView
         android:id="@+id/activity_lists_list_lists"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
+        android:layout_height="match_parent" android:fastScrollEnabled="true">
     </ListView>
 
 </LinearLayout>
